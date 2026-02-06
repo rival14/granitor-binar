@@ -2,6 +2,8 @@
 
 A REST API built with Laravel 12 implementing User management, Product catalog, and Order submission.
 
+**Live Demo:** [https://granitor.rivaldeveloper.web.id](https://granitor.rivaldeveloper.web.id)
+
 ## Requirements
 
 - PHP 8.2+
