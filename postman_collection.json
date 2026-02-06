@@ -1,0 +1,406 @@
+{
+	"info": {
+		"name": "Granitor Binar API",
+		"description": "REST API for authentication, User management, Product catalog, and Order management.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:8000/api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "YOUR_SANCTUM_TOKEN_HERE",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"description": "Login and token management",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var json = pm.response.json();",
+									"    pm.collectionVariables.set('token', json.token);",
+									"    console.log('Token saved to collection variable.');",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": ["{{base_url}}"],
+							"path": ["login"]
+						},
+						"description": "Authenticate with email and password. Returns a Sanctum API token. The token is automatically saved to the collection variable for subsequent requests. Inactive accounts are rejected."
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"description": "User CRUD operations",
+			"item": [
+				{
+					"name": "List Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/users?search=&page=1&per_page=15&sort_by=created_at&sort_direction=desc",
+							"host": ["{{base_url}}"],
+							"path": ["users"],
+							"query": [
+								{
+									"key": "search",
+									"value": "",
+									"description": "Search by name or email"
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number"
+								},
+								{
+									"key": "per_page",
+									"value": "15",
+									"description": "Results per page (max 100)"
+								},
+								{
+									"key": "sort_by",
+									"value": "created_at",
+									"description": "Sort by: name, email, created_at"
+								},
+								{
+									"key": "sort_direction",
+									"value": "desc",
+									"description": "Sort direction: asc, desc"
+								}
+							]
+						},
+						"description": "List active users with pagination, search, sorting, orders_count, and can_edit flag."
+					}
+				},
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"SecurePass123!\",\n    \"password_confirmation\": \"SecurePass123!\",\n    \"role\": \"user\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": ["{{base_url}}"],
+							"path": ["users"]
+						},
+						"description": "Create a new user. Sends confirmation email to user and notification to admin. Role is optional (defaults to 'user'). Valid roles: administrator, manager, user."
+					}
+				},
+				{
+					"name": "Show User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/users/1",
+							"host": ["{{base_url}}"],
+							"path": ["users", "1"]
+						},
+						"description": "Get a single user's details by ID."
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Updated\",\n    \"email\": \"john.updated@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users/1",
+							"host": ["{{base_url}}"],
+							"path": ["users", "1"]
+						},
+						"description": "Update a user. Authorization: admin can edit anyone, manager can edit regular users only, user can edit only themselves."
+					}
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/users/1",
+							"host": ["{{base_url}}"],
+							"path": ["users", "1"]
+						},
+						"description": "Soft-delete a user. Only administrators can delete users, and they cannot delete themselves."
+					}
+				}
+			]
+		},
+		{
+			"name": "Products",
+			"description": "Product CRUD operations",
+			"item": [
+				{
+					"name": "List Products",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/products?per_page=15&page=1",
+							"host": ["{{base_url}}"],
+							"path": ["products"],
+							"query": [
+								{
+									"key": "per_page",
+									"value": "15",
+									"description": "Results per page"
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number"
+								}
+							]
+						},
+						"description": "List all products with pagination."
+					}
+				},
+				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Widget Pro\",\n    \"description\": \"A professional-grade widget\",\n    \"sku\": \"WDG-PRO-001\",\n    \"price\": 49.99,\n    \"stock_quantity\": 100,\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/products",
+							"host": ["{{base_url}}"],
+							"path": ["products"]
+						},
+						"description": "Create a new product. SKU must be unique."
+					}
+				},
+				{
+					"name": "Show Product",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/products/1",
+							"host": ["{{base_url}}"],
+							"path": ["products", "1"]
+						},
+						"description": "Get a single product's details by ID."
+					}
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Widget Pro V2\",\n    \"price\": 59.99,\n    \"stock_quantity\": 200\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/products/1",
+							"host": ["{{base_url}}"],
+							"path": ["products", "1"]
+						},
+						"description": "Update a product. All fields are optional."
+					}
+				},
+				{
+					"name": "Delete Product",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/products/1",
+							"host": ["{{base_url}}"],
+							"path": ["products", "1"]
+						},
+						"description": "Soft-delete a product."
+					}
+				}
+			]
+		},
+		{
+			"name": "Orders",
+			"description": "Order listing and submission",
+			"item": [
+				{
+					"name": "List Orders",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/orders?per_page=15&page=1",
+							"host": ["{{base_url}}"],
+							"path": ["orders"],
+							"query": [
+								{
+									"key": "per_page",
+									"value": "15",
+									"description": "Results per page"
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number"
+								}
+							]
+						},
+						"description": "List orders for the authenticated user with pagination. Returns orders sorted by newest first, including items with product details."
+					}
+				},
+				{
+					"name": "Submit Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"items\": [\n        {\n            \"product_id\": 1,\n            \"quantity\": 2\n        },\n        {\n            \"product_id\": 3,\n            \"quantity\": 1\n        }\n    ],\n    \"notes\": \"Please handle with care\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/orders",
+							"host": ["{{base_url}}"],
+							"path": ["orders"]
+						},
+						"description": "Submit a new order for the authenticated user. Validates stock availability, creates order atomically, deducts stock, and snapshots unit prices. Returns order with items and product details."
+					}
+				}
+			]
+		}
+	]
+}

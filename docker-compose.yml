@@ -1,0 +1,114 @@
+services:
+  # --------------------------------------------------------------------------
+  # Application (FrankenPHP — single process, no Nginx/FPM needed)
+  # --------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: granitor-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:80"
+    environment:
+      - APP_ENV=${APP_ENV:-local}
+      - APP_DEBUG=${APP_DEBUG:-true}
+    env_file:
+      - .env
+    volumes:
+      - app-storage:/app/storage
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - granitor
+
+  # --------------------------------------------------------------------------
+  # MySQL Database
+  # --------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: granitor-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-granitor}
+      MYSQL_USER: ${DB_USERNAME:-granitor}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+    ports:
+      - "${DB_PORT_FORWARD:-3306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-secret}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - granitor
+
+  # --------------------------------------------------------------------------
+  # Redis (Cache + Queue)
+  # --------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: granitor-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT_FORWARD:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - granitor
+
+  # --------------------------------------------------------------------------
+  # Queue Worker
+  # --------------------------------------------------------------------------
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: granitor-queue
+    restart: unless-stopped
+    entrypoint: []
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    env_file:
+      - .env
+    volumes:
+      - app-storage:/app/storage
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - granitor
+
+  # --------------------------------------------------------------------------
+  # Mailpit (Dev email testing — web UI at localhost:8025)
+  # --------------------------------------------------------------------------
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: granitor-mailpit
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+    networks:
+      - granitor
+
+volumes:
+  mysql-data:
+  redis-data:
+  app-storage:
+
+networks:
+  granitor:
+    driver: bridge

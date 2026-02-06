@@ -1,0 +1,40 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Docker files (avoid recursive build context)
+docker-compose.yml
+Dockerfile
+
+# IDE and editor
+.idea
+.vscode
+*.swp
+*.swo
+
+# Dependencies (rebuilt inside container)
+vendor
+node_modules
+
+# Testing & dev tools
+tests
+phpunit.xml
+.phpunit.cache
+
+# Environment files (injected via docker-compose)
+.env
+.env.backup
+
+# Bootstrap cache (prevent stale local cache from leaking into image)
+bootstrap/cache/*.php
+
+# Storage artifacts
+storage/logs/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+
+# Misc
+README.md
+postman_collection.json

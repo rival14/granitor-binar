@@ -1,0 +1,24 @@
+{
+	# Disable automatic HTTPS in development (use APP_URL to control)
+	auto_https off
+
+	frankenphp
+
+	# Server options
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+:80 {
+	root * /app/public
+
+	# Encode responses with gzip
+	encode gzip
+
+	# Serve static files directly
+	file_server
+
+	# Pass all other requests to Laravel's front controller
+	php_server
+}
