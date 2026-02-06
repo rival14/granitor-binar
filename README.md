@@ -2,7 +2,7 @@
 
 A REST API built with Laravel 12 implementing User management, Product catalog, and Order submission.
 
-**Live Demo:** [https://granitor.rivaldeveloper.web.id](https://granitor.rivaldeveloper.web.id)
+**Live Demo Base URL:** [https://granitor.rivaldeveloper.web.id](https://granitor.rivaldeveloper.web.id)
 
 ## Requirements
 
@@ -240,7 +240,6 @@ The following services will be available:
 | Service  | URL                     | Description           |
 |----------|-------------------------|-----------------------|
 | API      | http://localhost:8000   | Laravel application   |
-| Mailpit  | http://localhost:8025   | Email testing web UI  |
 | MySQL    | localhost:3306          | Database              |
 | Redis    | localhost:6379          | Cache and queue       |
 
@@ -277,8 +276,7 @@ docker-compose.yml
 ├── app        → FrankenPHP (Caddy + PHP in one process), port 8000
 ├── queue      → Laravel queue worker (same image, different command)
 ├── mysql      → MySQL 8.0, persisted volume
-├── redis      → Redis 7 (cache + queue broker)
-└── mailpit    → SMTP catch-all + web UI, port 8025
+└── redis      → Redis 7 (cache + queue broker)
 ```
 
 The application uses [FrankenPHP](https://frankenphp.dev/) — a modern PHP application server built on Caddy. Unlike the traditional Nginx + PHP-FPM + Supervisor stack, FrankenPHP runs as a **single process**, reducing complexity and resource usage.
@@ -303,4 +301,4 @@ Key environment variables in `.env`:
 | `MAIL_ADMIN_ADDRESS` | Admin notification recipient email | `admin@example.com`|
 | `QUEUE_CONNECTION`   | Queue driver for async mail        | `database`         |
 
-For Docker, use `.env.docker` as the starting point — it has all service hostnames preconfigured (`mysql`, `redis`, `mailpit`).
+For Docker, use `.env.docker` as the starting point — it has all service hostnames preconfigured (`mysql`, `redis`).

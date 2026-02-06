@@ -37,6 +37,11 @@ services:
       MYSQL_DATABASE: ${DB_DATABASE:-granitor}
       MYSQL_USER: ${DB_USERNAME:-granitor}
       MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+    command: >
+      --innodb-buffer-pool-size=256M
+      --innodb-log-buffer-size=16M
+      --max-connections=50
+      --performance-schema=OFF
     ports:
       - "${DB_PORT_FORWARD:-3306}:3306"
     volumes:
@@ -48,6 +53,10 @@ services:
       retries: 10
     networks:
       - granitor
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   # --------------------------------------------------------------------------
   # Redis (Cache + Queue)
@@ -67,6 +76,10 @@ services:
       retries: 5
     networks:
       - granitor
+    deploy:
+      resources:
+        limits:
+          memory: 128M
 
   # --------------------------------------------------------------------------
   # Queue Worker
@@ -78,7 +91,7 @@ services:
     container_name: granitor-queue
     restart: unless-stopped
     entrypoint: []
-    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600 --memory=128
     env_file:
       - .env
     volumes:
@@ -90,19 +103,10 @@ services:
         condition: service_healthy
     networks:
       - granitor
-
-  # --------------------------------------------------------------------------
-  # Mailpit (Dev email testing — web UI at localhost:8025)
-  # --------------------------------------------------------------------------
-  mailpit:
-    image: axllent/mailpit:latest
-    container_name: granitor-mailpit
-    restart: unless-stopped
-    ports:
-      - "${MAILPIT_UI_PORT:-8025}:8025"
-      - "${MAILPIT_SMTP_PORT:-1025}:1025"
-    networks:
-      - granitor
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
 volumes:
   mysql-data:
